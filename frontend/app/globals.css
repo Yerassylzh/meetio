@@ -1,0 +1,149 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
+@import "tailwindcss";
+
+:root {
+  --color-text: black;
+  --color-bg: white;
+}
+
+html[theme="dark"] {
+  --color-text: white;
+  --color-bg: black;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  scroll-behavior: smooth;
+}
+
+body {
+  color: rgb(var(--foreground-rgb));
+  font-family: "Inter", system-ui, sans-serif;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: #2d2d2d;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #6b6b6b;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #8b8b8b;
+}
+
+.animate-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.8s ease-out forwards;
+}
+
+.animate-fade-in-left {
+  opacity: 0;
+  animation: fadeInLeft 0.8s ease-out forwards;
+}
+
+.animate-fade-in-right {
+  opacity: 0;
+  animation: fadeInRight 0.8s ease-out forwards;
+}
+
+.animate-fade-in-left-fast {
+  opacity: 0;
+  animation: fadeInLeft 0.2s ease-out forwards;
+}
+
+.animate-fade-in-right-fast {
+  opacity: 0;
+  animation: fadeInRight 0.2s ease-out forwards;
+}
+
+.animate-fade-in-up-fast {
+  opacity: 0;
+  animation: fadeInUp 0.2s ease-out forwards;
+}
+
+.color-text {
+  color: var(--color-text-primary);
+}
+
+.color-bg {
+  color: var(--color-bg);
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes fadeInRight {
+  from {
+    opacity: 0;
+    transform: translateX(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.scrollbar-custom::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb {
+  background-color: transparent;
+  border-radius: 9999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+
+.scrollbar-custom::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(148, 163, 184, 0.8); /* slate-400/80 */
+}
+
+.scrollbar-custom.scrolling::-webkit-scrollbar-thumb {
+  background-color: rgba(148, 163, 184, 0.5); /* slate-400/50 */
+}
