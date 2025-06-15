@@ -8,7 +8,7 @@ interface Props {
 
 export default function ProductFeature({ icon, title, content }: Props) {
   return (
-    <div className="w-[min(350px,100vw)] flex flex-col gap-[16px] animate-fade-in-up">
+    <div className="w-[min(350px,100vw)] flex flex-col gap-[16px]">
       <div className="w-full flex gap-[16px] justify-start items-center">
         {icon}
         <p className="font-normal text-[18px] leading-[28px] tracking-[0px] text-blue-600">

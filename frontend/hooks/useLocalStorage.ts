@@ -8,9 +8,9 @@ export default function useLocalStorage<T>(key: string, initialValue: T) {
       return initialValue;
     }
 
+    const item = localStorage.getItem(key);
     try {
-      const item = localStorage.getItem(key);
-      return item ? JSON.parse(item) as T : initialValue;
+      return item ? (JSON.parse(item) as T) : initialValue;
     } catch (error) {
       console.error(`Error reading localStorage key “${key}”:`, error);
       return initialValue;
@@ -19,7 +19,8 @@ export default function useLocalStorage<T>(key: string, initialValue: T) {
 
   const setValue = (value: T | ((val: T) => T)) => {
     try {
-      const valueToStore = value instanceof Function ? value(storedValue) : value;
+      const valueToStore =
+        value instanceof Function ? value(storedValue) : value;
       setStoredValue(valueToStore);
       localStorage.setItem(key, JSON.stringify(valueToStore));
     } catch (error) {
@@ -29,4 +30,3 @@ export default function useLocalStorage<T>(key: string, initialValue: T) {
 
   return [storedValue, setValue] as const;
 }
-

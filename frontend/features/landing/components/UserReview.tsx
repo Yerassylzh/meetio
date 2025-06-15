@@ -29,7 +29,13 @@ export default function UserReview({
       </div>
       <div className="w-full flex flex-col items-start justify-evenly">
         <div className="rounded-[50%]">
-          <Image src={icon_src} alt="I" width={60} height={60} />
+          <Image
+            src={icon_src}
+            alt="I"
+            width={60}
+            height={60}
+            className="rounded-[50%] mb-[16px] bg-gray-200"
+          />
         </div>
         <div className="text-[16px] text-blue-600">{name + " " + surname}</div>
         <div className="w-full flex justify-between items-center">

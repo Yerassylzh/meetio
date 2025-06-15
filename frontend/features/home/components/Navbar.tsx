@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Image from "next/image";
 import ThemeToggler from "@/components/ThemeToggler";
 import Link from "next/link";
@@ -9,18 +9,30 @@ import { useDeviceType } from "@/context/DeviceTypeContext";
 import PrimaryButton from "@/components/PrimaryButton";
 import Button from "@/components/Button";
 import { useTheme } from "@/context/ThemeContext";
+import { useAuth } from "@/context/AuthContext";
+import { logout as logoutOAuth } from "@/features/authentication/lib/actions/oAuth";
+import { logout } from "@/features/authentication/lib/actions/login";
 
 export default function Navbar() {
   const { isMobile } = useDeviceType();
   const [isMobileNavbarOpened, setIsMobileNavbarOpened] =
     useState<boolean>(false);
   const { theme } = useTheme();
+  const { isOAuth, user } = useAuth();
 
   useEffect(() => {
     if (!isMobile) {
       setIsMobileNavbarOpened(false);
     }
   }, [isMobile, setIsMobileNavbarOpened]);
+
+  const logoutUser = useCallback(async () => {
+    if (isOAuth) {
+      await logoutOAuth();
+    } else {
+      await logout();
+    }
+  }, [isOAuth]);
 
   return (
     <div className="w-full flex flex-col">
@@ -34,6 +46,7 @@ export default function Navbar() {
         {!isMobile ? (
           <div className="flex items-center justify-end flex-1 gap-[25px]">
             <ThemeToggler />
+            <p className="text-[16px] text-[var(--color-text)]">{user.name}</p>
             <Link
               href="#"
               className="font-medium text-[16px] !text-blue-500 pl-[18px]"
@@ -41,21 +54,16 @@ export default function Navbar() {
             >
               More
             </Link>
-            <Link
-              href="/login/"
-              className="font-medium text-[16px] !text-blue-500 pl-[18px]"
+            <p
+              className="font-medium text-[16px] !text-blue-500 pl-[18px] cursor-pointer"
+              onClick={logoutUser}
             >
-              Login
-            </Link>
-            <Link
-              href="/signup/"
-              className="font-medium text-[16px] !text-blue-500 pl-[18px]"
-            >
-              Signup
-            </Link>
+              Logout
+            </p>
           </div>
         ) : (
-          <div className="w-full flex justify-end items-center">
+          <div className="w-full flex justify-end items-center gap-4">
+            <p className="text-[16px] text-[var(--color-text)]">{user.name}</p>
             <button
               className="cursor-pointer"
               onClick={() => setIsMobileNavbarOpened((prev) => !prev)}
@@ -75,23 +83,18 @@ export default function Navbar() {
             <div className="w-full pl-[18px]">
               <ThemeToggler />
             </div>
-            <Link
-              href="#"
-              className="w-full font-medium text-[16px] !text-blue-500 pl-[18px]"
-              target="_blank"
-            >
-              More
-            </Link>
           </div>
           <div className="w-full flex gap-[20px] px-[10px]">
             <div className="flex flex-1">
               <Link href="/login/" className="w-full">
-                <PrimaryButton className="w-full">Log in</PrimaryButton>
+                <PrimaryButton onClick={logoutUser} className="w-full">
+                  Logout
+                </PrimaryButton>
               </Link>
             </div>
             <div className="flex flex-1">
               <Link href="/signup/" className="w-full">
-                <Button className="w-full">Sign up</Button>
+                <Button className="w-full">More</Button>
               </Link>
             </div>
           </div>
