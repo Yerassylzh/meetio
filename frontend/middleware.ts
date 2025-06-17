@@ -6,13 +6,14 @@ import {
 } from "@/features/authentication/lib/actions/session";
 import { auth } from "./auth";
 
-const protectedRoutes = ["/"];
+const protectedRoutes = ["/meet"];
 const landingPage = "/landing";
 const authRoutes = ["/login", "/signup"];
 
 export default async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
-  const isProtectedRoute = protectedRoutes.includes(path);
+  const isProtectedRoute =
+    path === "/" || protectedRoutes.some((value) => path.startsWith(value));
   const isAuthRoute = authRoutes.includes(path);
 
   const cookie = (await cookies()).get("session")?.value;

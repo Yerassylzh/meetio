@@ -67,7 +67,7 @@ export async function signup(prevState: object, formData: FormData) {
   });
 
   const duration = 7 * 24 * 60 * 60 * 1000;
-  await createSession(user, duration);
+  await createSession({ name: user.name, email: user.email }, duration);
 
   redirect("/");
 }

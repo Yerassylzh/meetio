@@ -3,6 +3,7 @@ import type { NextConfig } from "next";
 import type { Configuration } from "webpack";
 
 const nextConfig: NextConfig = {
+  reactStrictMode: false,
   webpack: (config: Configuration, { dev, isServer }) => {
     config.plugins = config.plugins || [];
     config.plugins.push(

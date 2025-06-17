@@ -1,12 +1,11 @@
 "use client";
+
 import ThemeToggler from "@/components/ThemeToggler";
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { useTheme } from "@/context/ThemeContext";
 import cls from "@/utils/ClassSplitterByTheme";
-import IconicButton from "@/components/IconicButton";
-import { GoogleIcon, GithubIcon } from "@/features/landing/components/Svgs";
 import LoginForm from "@/features/authentication/components/form/LoginForm";
 import OAuthForm from "@/features/authentication/components/form/OAuthForm";
 

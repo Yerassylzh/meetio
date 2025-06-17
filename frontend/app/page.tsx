@@ -2,10 +2,14 @@
 
 import FadeInWrapper from "@/components/FadeInWrapper";
 import IconicButton from "@/components/IconicButton";
-import { AuthProvider, useAuth } from "@/context/AuthContext";
+import SpinnerSvg from "@/components/SpinnerSvg";
+import { AuthProvider } from "@/context/AuthContext";
 import Navbar from "@/features/home/components/Navbar";
+import { getNewRoomId } from "@/features/meet/lib/actions";
 import { PlusIcon } from "lucide-react";
 import Image from "next/image";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Wrapper() {
   return (
@@ -16,6 +20,21 @@ export default function Wrapper() {
 }
 
 function Home() {
+  const [isCreating, setIsCreating] = useState<boolean>(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    if (isCreating === false) {
+      return;
+    }
+
+    const wrapper = async () => {
+      const newRoomId = await getNewRoomId();
+      router.push(`/meet/${newRoomId}`);
+    };
+    wrapper();
+  }, [isCreating, router]);
+
   return (
     <div className="w-full min-h-screen bg-[var(--color-bg)]">
       <Navbar />
@@ -31,11 +50,20 @@ function Home() {
               unoptimized
               priority
             />
-            <div className="w-[200px]">
+            <div
+              className="w-[200px]"
+              onClick={() => {
+                setIsCreating(true);
+              }}
+            >
               <IconicButton
                 text={"Create a room"}
                 icon={
-                  <PlusIcon size={17} className="text-[var(--color-text)]" />
+                  isCreating ? (
+                    <SpinnerSvg size={17} color="var(--color-text)" />
+                  ) : (
+                    <PlusIcon size={17} className="text-[var(--color-text)]" />
+                  )
                 }
               />
             </div>

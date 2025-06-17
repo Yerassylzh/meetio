@@ -3,6 +3,7 @@
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/context/ThemeContext";
+import { Toaster } from "react-hot-toast";
 import dynamic from "next/dynamic";
 
 const DeviceTypeProvider = dynamic(
@@ -26,6 +27,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${poppins.variable} antialiased`}>
+        <Toaster position="top-center" />
         <DeviceTypeProvider>
           <ThemeProvider>{children}</ThemeProvider>
         </DeviceTypeProvider>

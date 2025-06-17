@@ -63,7 +63,7 @@ export async function login(prevState: object, formData: FormData) {
   }
 
   const days90 = 90 * 24 * 60 * 60 * 1000;
-  await createSession(user, days90);
+  await createSession({ name: user.name, email: user.email }, days90);
 
   redirect("/");
 }
