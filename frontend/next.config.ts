@@ -54,7 +54,7 @@ const nextConfig: NextConfig = {
     config.resolve = config.resolve || {};
     config.resolve.fallback = {
       ...(config.resolve.fallback || {}),
-      buffer: require.resolve("buffer/"),
+      buffer: require.resolve("buffer"),
       fs: false,
       path: false,
       crypto: false,
