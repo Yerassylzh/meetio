@@ -21,3 +21,11 @@ export async function deleteRoom(roomId: string): Promise<void> {
     where: { id: Number(roomId) },
   });
 }
+
+export async function checkIfRoomExists(roomId: string) {
+  return (
+    (await prisma.room.findUnique({
+      where: { id: Number(roomId) },
+    })) !== null
+  );
+}

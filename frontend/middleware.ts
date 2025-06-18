@@ -4,9 +4,8 @@ import {
   decryptToken,
   deleteSession,
 } from "@/features/authentication/lib/actions/session";
-import { auth } from "./auth";
 
-const protectedRoutes = ["/meet"];
+const protectedRoutes = ["/meet/"];
 const landingPage = "/landing";
 const authRoutes = ["/login", "/signup"];
 
@@ -17,11 +16,7 @@ export default async function middleware(req: NextRequest) {
   const isAuthRoute = authRoutes.includes(path);
 
   const cookie = (await cookies()).get("session")?.value;
-  let isAuth = cookie ? (await decryptToken(cookie)) !== undefined : false;
-  if (!isAuth) {
-    const session = await auth();
-    isAuth = session !== null;
-  }
+  const isAuth = cookie ? (await decryptToken(cookie)) !== undefined : false;
 
   // Session is expired but still inside of storage
   if (cookie && !isAuth) {

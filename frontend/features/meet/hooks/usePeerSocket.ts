@@ -1,37 +1,29 @@
 import { useAuth } from "@/context/AuthContext";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { UserVideo } from "../types/all";
 import { TokenUser } from "@/types/db";
 import { useMeet } from "../context/MeetContext";
+import type { MediaConnection } from "peerjs";
+import usePeer from "./usePeer";
 
 export default function usePeerSocket() {
   const { user } = useAuth();
   const {
     socket,
-    peer,
     roomId,
     localVideoRef,
     setRemoteVideos,
     isAudioMuted,
     isCameraMuted,
+    stream,
   } = useMeet();
-
-  const [stream, setStream] = useState<MediaStream | null>(null);
+  const peer = usePeer();
 
   useEffect(() => {
-    const wrapper = async () => {
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: true,
-        audio: true,
-      });
-      setStream(stream);
-
-      if (localVideoRef.current) {
-        localVideoRef.current.muted = true;
-        localVideoRef.current.srcObject = stream;
-      }
-    };
-    wrapper();
+    if (localVideoRef.current) {
+      localVideoRef.current.muted = true;
+      localVideoRef.current.srcObject = stream;
+    }
 
     const localVideoEl = localVideoRef.current;
 
@@ -42,198 +34,234 @@ export default function usePeerSocket() {
           .forEach((track) => track.stop());
       }
     };
-  }, [localVideoRef]);
+  }, [localVideoRef, stream]);
+
+  const handlePeerOpen = useCallback(
+    (id: string) => {
+      console.log(stream);
+      socket.emit("register-user", id, user.name, user.email);
+      socket.emit("join-room", roomId);
+    },
+    [socket, roomId, user, stream]
+  );
+
+  const handleUserJoined = useCallback(
+    (userPeerId: string, userName: string, userEmail: string) => {
+      if (!peer || !stream) return;
+      const call = peer.call(userPeerId, stream, {
+        metadata: {
+          user: user,
+          isAudioMuted: false,
+          isCameraMuted: false,
+        },
+      });
+      const remoteUser = { name: userName, email: userEmail };
+
+      let recieved = false;
+      call.on("stream", (userStream) => {
+        if (recieved) return;
+        recieved = true;
+
+        setRemoteVideos((prev) => {
+          return [
+            ...prev,
+            {
+              user: remoteUser,
+              srcObject: userStream,
+              isMuted: false,
+              isCameraOff: false,
+            },
+          ];
+        });
+      });
+    },
+    [peer, stream, setRemoteVideos, user]
+  );
+
+  const handlePeerCall = useCallback(
+    (call: MediaConnection) => {
+      if (!stream) return;
+      call.answer(stream);
+
+      let recieved = false;
+      call.on("stream", (userStream) => {
+        if (recieved) return;
+        recieved = true;
+
+        setRemoteVideos((prev) => {
+          const remoteVideo = {
+            user: call.metadata.user as TokenUser,
+            srcObject: userStream,
+            isMuted: call.metadata.isAudioMuted as boolean,
+            isCameraOff: call.metadata.isCameraMuted as boolean,
+          };
+          if (prev.length === 0) {
+            return [remoteVideo];
+          }
+          return [...prev, remoteVideo];
+        });
+      });
+    },
+    [stream, setRemoteVideos]
+  );
+
+  const handleMicOn = useCallback(
+    (remoteUser: TokenUser) => {
+      setRemoteVideos((remoteVideos) => {
+        const video = remoteVideos.find(
+          (video) => video.user.email === remoteUser.email
+        );
+        if (video === undefined) {
+          console.error(
+            `Cannot turn of the microphone on for ${remoteUser.email}`
+          );
+          return remoteVideos;
+        }
+
+        return [
+          ...remoteVideos.filter(
+            (remoteVideo) => remoteVideo.user.email !== video?.user.email
+          ),
+          {
+            user: video.user,
+            srcObject: video.srcObject,
+            isMuted: false,
+            isCameraOff: video.isCameraOff,
+          } as UserVideo,
+        ];
+      });
+    },
+    [setRemoteVideos]
+  );
+
+  const handleMicOff = useCallback(
+    (remoteUser: TokenUser) => {
+      setRemoteVideos((remoteVideos) => {
+        const video = remoteVideos.find(
+          (video) => video.user.email === remoteUser.email
+        );
+        if (video === undefined) {
+          console.error(
+            `Cannot turn of the microphone off for ${remoteUser.email}`
+          );
+          return remoteVideos;
+        }
+
+        return [
+          ...remoteVideos.filter(
+            (remoteVideo) => remoteVideo.user.email !== video?.user.email
+          ),
+          {
+            user: video.user,
+            srcObject: video.srcObject,
+            isMuted: true,
+            isCameraOff: video.isCameraOff,
+          } as UserVideo,
+        ];
+      });
+    },
+    [setRemoteVideos]
+  );
+
+  const handleCameraOn = useCallback(
+    (remoteUser: TokenUser) => {
+      setRemoteVideos((remoteVideos) => {
+        const video = remoteVideos.find(
+          (video) => video.user.email === remoteUser.email
+        );
+        if (video === undefined) {
+          console.error(
+            `Cannot turn of the camera off for ${remoteUser.email}`
+          );
+          return remoteVideos;
+        }
+
+        return [
+          ...remoteVideos.filter(
+            (remoteVideo) => remoteVideo.user.email !== video?.user.email
+          ),
+          {
+            user: video.user,
+            srcObject: video.srcObject,
+            isMuted: video.isMuted,
+            isCameraOff: false,
+          } as UserVideo,
+        ];
+      });
+    },
+    [setRemoteVideos]
+  );
+
+  const handleCameraOff = useCallback(
+    (remoteUser: TokenUser) => {
+      setRemoteVideos((remoteVideos) => {
+        const video = remoteVideos.find(
+          (video) => video.user.email === remoteUser.email
+        );
+        if (video === undefined) {
+          console.error(
+            `Cannot turn of the camera off for ${remoteUser.email}`
+          );
+          return remoteVideos;
+        }
+
+        return [
+          ...remoteVideos.filter(
+            (remoteVideo) => remoteVideo.user.email !== video?.user.email
+          ),
+          {
+            user: video.user,
+            srcObject: video.srcObject,
+            isMuted: video.isMuted,
+            isCameraOff: true,
+          } as UserVideo,
+        ];
+      });
+    },
+    [setRemoteVideos]
+  );
+
+  const handleUserDisconnected = useCallback(
+    (userEmail: string) => {
+      setRemoteVideos((prev) => {
+        return [...prev.filter((val) => val.user.email !== userEmail)];
+      });
+    },
+    [setRemoteVideos]
+  );
 
   useEffect(() => {
-    const wrapper = async () => {
-      if (peer === null) {
-        return;
-      }
+    peer?.on("open", handlePeerOpen);
+    peer?.on("call", handlePeerCall);
 
-      peer.on("open", (id) => {
-        socket.emit("register-user", id, user.name, user.email);
-        socket.emit("join-room", roomId);
-      });
+    socket.on("user-joined", handleUserJoined);
+    socket.on("mic-on", handleMicOn);
+    socket.on("mic-off", handleMicOff);
+    socket.on("camera-on", handleCameraOn);
+    socket.on("camera-off", handleCameraOff);
+    socket.on("user-disconnected", handleUserDisconnected);
 
-      socket.on(
-        "user-joined",
-        (userPeerId: string, userName: string, userEmail: string) => {
-          if (stream === null) return;
-
-          const call = peer.call(userPeerId, stream, {
-            metadata: {
-              user: user,
-              isAudioMuted: isAudioMuted,
-              isCameraMuted: isCameraMuted,
-            },
-          });
-          const remoteUser = { name: userName, email: userEmail };
-
-          let recieved = false;
-          call.on("stream", (userStream) => {
-            if (recieved) return;
-            recieved = true;
-
-            setRemoteVideos((prev) => {
-              return [
-                ...prev,
-                {
-                  user: remoteUser,
-                  srcObject: userStream,
-                  isMuted: false,
-                  isCameraOff: false,
-                },
-              ];
-            });
-          });
-        }
-      );
-
-      peer.on("call", (call) => {
-        if (stream === null) return;
-        call.answer(stream);
-
-        let recieved = false;
-        call.on("stream", (userStream) => {
-          if (recieved) return;
-          recieved = true;
-
-          setRemoteVideos((prev) => {
-            const remoteVideo = {
-              user: call.metadata.user as TokenUser,
-              srcObject: userStream,
-              isMuted: call.metadata.isAudioMuted as boolean,
-              isCameraOff: call.metadata.isCameraMuted as boolean,
-            };
-            if (prev.length === 0) {
-              return [remoteVideo];
-            }
-            return [...prev, remoteVideo];
-          });
-        });
-      });
-
-      socket.on("mic-on", (remoteUser: TokenUser) => {
-        setRemoteVideos((remoteVideos) => {
-          const video = remoteVideos.find(
-            (video) => video.user.email === remoteUser.email
-          );
-          if (video === undefined) {
-            console.error(
-              `Cannot turn of the microphone on for ${remoteUser.email}`
-            );
-            return remoteVideos;
-          }
-
-          return [
-            ...remoteVideos.filter(
-              (remoteVideo) => remoteVideo.user.email !== video?.user.email
-            ),
-            {
-              user: video.user,
-              srcObject: video.srcObject,
-              isMuted: false,
-              isCameraOff: video.isCameraOff,
-            } as UserVideo,
-          ];
-        });
-      });
-
-      socket.on("mic-off", (remoteUser: TokenUser) => {
-        setRemoteVideos((remoteVideos) => {
-          const video = remoteVideos.find(
-            (video) => video.user.email === remoteUser.email
-          );
-          if (video === undefined) {
-            console.error(
-              `Cannot turn of the microphone off for ${remoteUser.email}`
-            );
-            return remoteVideos;
-          }
-
-          return [
-            ...remoteVideos.filter(
-              (remoteVideo) => remoteVideo.user.email !== video?.user.email
-            ),
-            {
-              user: video.user,
-              srcObject: video.srcObject,
-              isMuted: true,
-              isCameraOff: video.isCameraOff,
-            } as UserVideo,
-          ];
-        });
-      });
-
-      socket.on("camera-on", (remoteUser: TokenUser) => {
-        setRemoteVideos((remoteVideos) => {
-          const video = remoteVideos.find(
-            (video) => video.user.email === remoteUser.email
-          );
-          if (video === undefined) {
-            console.error(
-              `Cannot turn of the camera off for ${remoteUser.email}`
-            );
-            return remoteVideos;
-          }
-
-          return [
-            ...remoteVideos.filter(
-              (remoteVideo) => remoteVideo.user.email !== video?.user.email
-            ),
-            {
-              user: video.user,
-              srcObject: video.srcObject,
-              isMuted: video.isMuted,
-              isCameraOff: false,
-            } as UserVideo,
-          ];
-        });
-      });
-
-      socket.on("camera-off", (remoteUser: TokenUser) => {
-        setRemoteVideos((remoteVideos) => {
-          const video = remoteVideos.find(
-            (video) => video.user.email === remoteUser.email
-          );
-          if (video === undefined) {
-            console.error(
-              `Cannot turn of the camera off for ${remoteUser.email}`
-            );
-            return remoteVideos;
-          }
-
-          return [
-            ...remoteVideos.filter(
-              (remoteVideo) => remoteVideo.user.email !== video?.user.email
-            ),
-            {
-              user: video.user,
-              srcObject: video.srcObject,
-              isMuted: video.isMuted,
-              isCameraOff: true,
-            } as UserVideo,
-          ];
-        });
-      });
-
-      socket.on("user-disconnected", (userEmail) => {
-        setRemoteVideos((prev) => {
-          return [...prev.filter((val) => val.user.email !== userEmail)];
-        });
-      });
+    return () => {
+      peer?.off("open", handlePeerOpen);
+      peer?.off("call", handlePeerCall);
+      socket.off("user-joined", handleUserJoined);
+      socket.off("mic-on", handleMicOn);
+      socket.off("mic-off", handleMicOff);
+      socket.off("camera-on", handleCameraOn);
+      socket.off("camera-off", handleCameraOff);
+      socket.off("user-disconnected", handleUserDisconnected);
     };
-
-    wrapper();
   }, [
     socket,
     peer,
-    roomId,
-    user,
-    setRemoteVideos,
-    isAudioMuted,
-    isCameraMuted,
-    stream,
+    handlePeerCall,
+    handlePeerOpen,
+    handleUserJoined,
+    handleMicOn,
+    handleMicOff,
+    handleCameraOn,
+    handleCameraOff,
+    handleUserDisconnected,
   ]);
 
   return socket;

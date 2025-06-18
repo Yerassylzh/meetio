@@ -2,7 +2,6 @@
 
 import {
   decryptToken,
-  loadOAuthSession,
   loadUserSessionFromCookies,
 } from "@/features/authentication/lib/actions/session";
 import { TokenUser } from "@/types/db";
@@ -32,16 +31,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const session = await decryptToken(cookie);
         if (session) {
           setUser(session.user);
-          setIsOAuth(false);
-        }
-      } else {
-        const data = await loadOAuthSession();
-        if (data?.user) {
-          setUser({
-            name: data.user.name as string,
-            email: data.user.email as string,
-          });
-          setIsOAuth(true);
+          setIsOAuth(session.isOAuth);
         }
       }
     };

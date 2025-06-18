@@ -35,7 +35,7 @@ export async function login(prevState: object, formData: FormData) {
   }
 
   const { email, password } = result.data;
-  const passwordHash = hashPassword(password);
+  const passwordHash = await hashPassword(password);
 
   const user: User = (await prisma.user.findUnique({
     where: { email: email },
@@ -71,4 +71,19 @@ export async function login(prevState: object, formData: FormData) {
 export async function logout() {
   await deleteSession();
   redirect("/login");
+}
+
+export async function createIfDoesnotExist(email: string, name: string) {
+  const existingUser = await prisma.user.findUnique({
+    where: { email: email },
+  });
+
+  if (!existingUser) {
+    await prisma.user.create({
+      data: {
+        email: email,
+        name: name || "",
+      },
+    });
+  }
 }
